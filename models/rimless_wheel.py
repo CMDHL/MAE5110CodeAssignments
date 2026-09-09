@@ -37,12 +37,26 @@ def calculate_energy(state, params):
     gravity = params["gravity"]
     length = params["length"]
     mass = params["mass"]
+    N = params['N']
+    gamma = params["gamma"]
+    alpha = params["alpha"]
 
     angle = state[0]  # indexes entire row "vectorized" if state is (2, N)
     angular_velocity = state[1]
 
     kinetic_energy = 0.5 * mass * (length * angular_velocity) ** 2
-    potential_energy = mass * gravity * length * np.cos(angle)
+    if np.ndim(angle) == 0:
+        contact_height = 0.0
+
+    else:
+        reset = np.diff(angle) < -alpha
+        step_number = np.concatenate(([0], np.cumsum(reset)))
+        contact_height_drop = (2 * length * np.sin(alpha) * np.sin(gamma))
+        contact_height = -step_number * contact_height_drop
+
+    hub_height = contact_height + length * np.cos(angle)
+    potential_energy = mass * gravity * hub_height
+
     return kinetic_energy, potential_energy
 
 

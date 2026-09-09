@@ -21,7 +21,7 @@ def sim(initial_state, timestep, sim_time, params, model):
 
 params = model.generate_params()
 initial_state = np.array([0, 1.5])
-sim_time = 5.0
+sim_time = 10.0
 
 timestep = 1e-3
 time_traj, state_traj = sim(initial_state, timestep, sim_time, params, model)
