@@ -1,0 +1,7 @@
+{
+  "fixed_speed_rad_per_s": 1.2243971128804014,
+  "left_slope": 0.4987437265237314,
+  "right_slope": 0.5012437733981573,
+  "centered_floquet_multiplier": 0.49999374996094437,
+  "exact_floquet_multiplier": 0.5000000000000001
+}

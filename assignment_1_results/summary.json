@@ -1,0 +1,60 @@
+{
+  "default_parameters": {
+    "N": 8,
+    "gamma": 0.1,
+    "gravity": 9.81,
+    "length": 1.0,
+    "mass": 1.0,
+    "damping_coeff": 0.0,
+    "alpha": 0.39269908169872414
+  },
+  "sanity_checks": {
+    "maximum_swing_energy_drift_joule": 7.913669719528116e-12,
+    "maximum_impact_angle_error_rad": 0.0,
+    "maximum_reset_angle_error_rad": 0.0,
+    "maximum_reset_speed_error_rad_per_second": 0.0
+  },
+  "default_region_of_attraction": {
+    "angle_points": 121,
+    "speed_points": 181,
+    "normalized_angle_limits": [
+      -1.0,
+      1.0
+    ],
+    "normalized_speed_limits": [
+      -1.25,
+      1.25
+    ],
+    "rolling_fraction": 0.5754988356696041,
+    "unresolved_fraction": 0.0,
+    "coarse_grid_rolling_fraction": 0.575031525851198,
+    "grid_refinement_change": 0.0004673098184061475
+  },
+  "return_map": {
+    "minimum_crossing_speed_rad_per_s": 0.9134913832502304,
+    "numerical_fixed_point_speed_rad_per_s": 1.2243971066109824,
+    "analytic_fixed_point_speed_rad_per_s": 1.224397112880402,
+    "left_finite_difference_slope": 0.49874372525701977,
+    "right_finite_difference_slope": 0.5012437720571988,
+    "centered_floquet_multiplier": 0.49999374865710927,
+    "analytic_floquet_multiplier": 0.5000000000000001
+  },
+  "sweeps": {
+    "critical_slope_for_eight_spokes_rad": 0.06822945245228716,
+    "slope_grid_count": 9,
+    "spoke_counts": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "spoke_sweep_slope_rad": 0.2,
+    "normalized_state_grid": {
+      "angle": "(theta - gamma) / alpha in [-1, 1]",
+      "angular_velocity": "omega * sqrt(length / gravity) in [-1.25, 1.25]"
+    }
+  }
+}
