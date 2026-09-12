@@ -17,7 +17,7 @@ import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Arc, Patch
 
-from integrators import rk4
+from integrators import rk4 as integrator
 from models import rimless_wheel as wheel
 
 STANDING = 0
@@ -75,7 +75,7 @@ def integrate_step(
     params: dict[str, float],
 ) -> np.ndarray:
     """Advance the single-support flow by one fourth-order Runge--Kutta step."""
-    return rk4.step(time, state, timestep, params, wheel)
+    return integrator.step(time, state, timestep, params, wheel)
 
 
 def locate_boundary_crossing(
@@ -87,7 +87,7 @@ def locate_boundary_crossing(
     params: dict[str, float],
     tolerance: float = 1e-12,
 ) -> tuple[float, np.ndarray]:
-    """Locate an angle crossing inside one RK4 step by bisection."""
+    """Locate an angle crossing inside one step by bisection."""
     lower_offset = 0.0
     upper_offset = timestep
     while upper_offset - lower_offset > tolerance:
@@ -308,7 +308,7 @@ def calculate_numerical_return_map(
     params: dict[str, float],
     timestep: float = 1e-3,
 ) -> np.ndarray:
-    """Sample the positive-speed rolling branch using RK4 and event location."""
+    """Sample the positive-speed rolling branch using event location."""
     mapped_speeds = np.full_like(post_impact_speeds, np.nan, dtype=float)
     for index, speed in np.ndenumerate(post_impact_speeds):
         step = simulate_one_downhill_step(float(speed), params, timestep=timestep)
@@ -786,7 +786,7 @@ def plot_return_map(
         "o",
         color="#4c78a8",
         ms=3.5,
-        label="RK4 event samples (rolling branch)",
+        label="event samples (rolling branch)",
     )
     limits = [float(input_speeds.min()), float(input_speeds.max())]
     axis.plot(limits, limits, "k--", label="identity")
