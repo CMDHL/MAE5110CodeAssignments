@@ -24,16 +24,17 @@ uv run python assignment_0.py
 ### Assignment 1 results
 
 The completed analysis and discussion are in
-[the Assignment 1 report](assignment_1_report.md). Regenerate every figure and
-numeric table with:
+[the Assignment 1 report](assignment_1_report.md). Run each experiment on its
+own with:
 
 ```console
-uv run python assignment_1.py
+uv run python assignment_1.py sanity
+uv run python assignment_1.py roa
+uv run python assignment_1.py return-map
+uv run python assignment_1.py floquet
+uv run python assignment_1.py slope-sweep
+uv run python assignment_1.py spoke-sweep
 ```
 
-For a faster smoke run, add `--quick`. Run the focused checks with:
-
-```console
-uv run pytest -q
-uv run ruff check assignment_1.py models/rimless_wheel.py tests/
-```
+Each command writes the figure or table for that specific part of the
+assignment into `assignment_1_results/`.

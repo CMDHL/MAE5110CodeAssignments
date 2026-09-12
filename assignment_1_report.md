@@ -1,230 +1,209 @@
-# Assignment 1: Rimless-Wheel Dynamics and Stability
+# Assignment 1: Rimless Wheel
 
-## Reproducing the results
+## Reproducing the experiments
 
-From the repository root, copy and paste:
+Run these commands from the repository root. Each command handles one assignment
+task and writes its own output to `assignment_1_results/`.
 
 ```console
-uv sync --python 3.14
-uv run python assignment_1.py
-uv run pytest -q
+uv run python assignment_1.py sanity
 ```
 
-The analysis command regenerates every figure and CSV file in
-`assignment_1_results/`. It takes about 7 seconds after Matplotlib has built its
-font cache. A smaller smoke run is available as
-`uv run python assignment_1.py --quick`.
+Runs a short rolling simulation. It saves `sanity_checks.png`. The plot should
+show the state trajectory, the phase portrait, energy during the motion, and
+post-impact speeds approaching the rolling cycle.
 
-I used the following nominal parameters unless stated otherwise:
+```console
+uv run python assignment_1.py roa
+```
 
-| parameter | value |
-|---|---:|
-| number of spokes, $N$ | 8 |
-| half inter-spoke angle, $\alpha=\pi/N$ | 0.392699 rad |
-| slope, $\gamma$ | 0.100000 rad (5.73 deg) |
-| spoke length, $l$ | 1.0 m |
-| hub mass, $m$ | 1.0 kg |
-| gravity, $g$ | 9.81 m/s$^2$ |
-| viscous damping | 0 |
+Estimates the regions of attraction on a state-space grid. It saves
+`region_of_attraction.png`. With the default parameters, about 57.31% of the
+sampled states roll and about 42.69% settle to standing.
+
+```console
+uv run python assignment_1.py return-map
+```
+
+Plots the one-step Poincare return map and the identity line. It saves
+`return_map.png`. The rolling fixed point should be near 1.224397 rad/s.
+
+```console
+uv run python assignment_1.py floquet
+```
+
+Perturbs the return-map fixed point on both sides. It saves `floquet.json`.
+The centered Floquet multiplier should be about 0.499994, close to the exact
+value 0.5.
+
+```console
+uv run python assignment_1.py slope-sweep
+```
+
+Sweeps the ground slope for an eight-spoke wheel. It saves `slope_sweep.csv`
+and `slope_sweep.png`. The rolling basin grows as the slope increases; at
+`gamma = 0.04` rad there is no rolling fixed point.
+
+```console
+uv run python assignment_1.py spoke-sweep
+```
+
+Sweeps the number of spokes from 6 to 12 at `gamma = 0.2` rad. It saves
+`spoke_sweep.csv` and `spoke_sweep.png`. More spokes increase the rolling basin
+in this bounded grid, but the per-step Floquet multiplier also increases.
 
 ## Model
 
-![Annotated rimless-wheel model](assignment_1_results/model_sketch.png)
+![Annotated model](assignment_1_results/model_sketch.png)
 
-The state is $x=[\theta,\dot\theta]$, where $\theta$ is measured clockwise from
-the upward world vertical, so downhill motion is positive. During single
-support the hub is an inverted pendulum,
+The state is
 
 $$
-\dot\theta=\omega, \qquad \dot\omega=\frac{g}{l}\sin\theta.
+x = [\theta,\dot\theta],
 $$
 
-I detect contacts in both directions. The downhill guard is
-$\theta=\gamma+\alpha$ with $\omega>0$; the uphill guard is
-$\theta=\gamma-\alpha$ with $\omega<0$. At a downhill impact the new coordinate
-is $\theta^+=\gamma-\alpha$, while at an uphill impact it is
-$\theta^+=\gamma+\alpha$. Conservation of angular momentum about the new
-contact gives the same velocity reset in both directions,
+where $\theta$ is measured from the upward vertical and downhill rotation is
+positive. During single support the wheel is an inverted pendulum:
 
 $$
-\omega^+=\cos(2\alpha)\omega^-.
+\dot\theta = \omega,\qquad
+\dot\omega = {g\over l}\sin\theta.
 $$
 
-Both directions matter for the standing attractor. A low-energy wheel rocks
-between two spokes and its impact speed tends to zero through a Zeno sequence.
-After each impact the numerical simulator uses the same signed return map as the
-basin computation to detect when the remaining impacts are guaranteed to
-converge to this Zeno standing state; it then switches to an absorbing
-double-support mode instead of trying to resolve infinitely many impacts.
+The slope $\gamma$ sets the contact angle, not the gravity term. A downhill
+impact happens when
+
+$$
+\theta = \gamma + \alpha,\qquad \alpha = {\pi\over N}.
+$$
+
+At impact the new stance spoke becomes the coordinate reference, so
+
+$$
+\theta^+ = \theta^- - 2\alpha,\qquad
+\omega^+ = \omega^-\cos(2\alpha).
+$$
 
 ## Sanity checks
 
-Before running the stability analysis I expected four basic behaviors:
+I checked three things before doing the stability plots:
 
-1. Mechanical energy should be constant during every undamped swing.
-2. Contact should occur at exactly $\gamma+\alpha$ (or $\gamma-\alpha$ when
-   moving backward), rather than one integration step beyond it.
-3. The coordinate should jump by $2\alpha$, potential energy should remain
-   continuous at contact, and kinetic energy should be multiplied by
-   $\cos^2(2\alpha)$.
-4. A rolling initial condition should converge step by step to a repeatable
-   post-impact speed.
+1. The angle should reset by $2\alpha$ at each step.
+2. Mechanical energy should be smooth during a swing and should drop only at
+   plastic impacts.
+3. A rolling initial condition should approach a repeatable post-impact speed.
 
-I used RK4 with $\Delta t=10^{-3}$ s and bisected each detected guard crossing.
-For a 10 s rolling simulation, the largest swing-energy discrepancy was
-$7.91\times10^{-12}$ J. The largest recorded guard-angle, reset-angle, and
-reset-speed errors were all below the stored double-precision resolution
-(reported as 0). The speed converged to 1.224397 rad/s, and the energy plot has
-constant plateaus separated only by the expected plastic-impact losses. Thus
-all four observations matched the predictions.
+The command
 
-![State, phase, energy, and convergence sanity checks](assignment_1_results/sanity_checks.png)
+```console
+uv run python assignment_1.py sanity
+```
+
+uses the default parameters and starts at the post-impact angle with
+$\dot\theta = 1.5$ rad/s. The last post-impact speed from the run is
+1.229089 rad/s, close to the return-map fixed point of 1.224397 rad/s.
+
+![Sanity checks](assignment_1_results/sanity_checks.png)
 
 ## Regions of attraction
 
-I evaluated every cell of a $121\times181$ grid on the physically admissible
-single-stance domain
+For the region-of-attraction plot, I sampled the single-stance interval
 
 $$
-\theta\in[\gamma-\alpha,\gamma+\alpha],\qquad
+\theta\in[\gamma-\alpha,\gamma+\alpha]
+$$
+
+and angular velocities in
+
+$$
 \dot\theta\sqrt{l/g}\in[-1.25,1.25].
 $$
 
-The grid uses cell centers, so no sample is placed artificially on a contact
-guard. Between impacts I advance the ideal swing exactly using conserved
-energy, then iterate the complete signed contact map for at most 150 impacts.
-This event-driven brute-force simulation avoids the small-timestep error at the
-nonsmooth reset. A state is rolling when its post-impact speed is within
-$10^{-3}\sqrt{g/l}$ of the rolling fixed point and still on the downhill-crossing
-branch. A state is standing when the signed map drives its speed within that
-tolerance of zero.
+To keep the brute-force grid fast, I used energy to move each initial condition
+to its next contact, then iterated the signed step-to-step map. This avoids
+taking tiny fixed timesteps near every nonsmooth impact.
 
-There are two stable attractors for the nominal parameters:
+There are two stable attractors in the sampled window:
 
-- the double-support standing fixed point; and
+- standing, reached by low-energy rocking steps; and
 - the downhill rolling limit cycle.
 
-Of the 21,901 initial states, 57.550% converged to rolling and 42.450% converged
-to standing; none remained unresolved. A coarser $61\times91$ grid gave 57.503%
-rolling, a change of only 0.047 percentage points. The isolated single-spoke
-state $(0,0)$ is an unstable equilibrium/separatrix, not a stable attractor.
-The black curve below is one period of the rolling orbit and the dotted segment
-is its impact reset.
+For the default grid, the rolling basin is 57.31% of the sampled states and the
+standing basin is 42.69%.
 
-![Nominal state-space regions of attraction](assignment_1_results/region_of_attraction.png)
+![Regions of attraction](assignment_1_results/region_of_attraction.png)
 
-The percentages above are bounded RoA fractions for the explicitly stated
-window, not measures over an unbounded velocity space.
+## Return map and Floquet multiplier
 
-## Poincare return map and Floquet multiplier
-
-I use the state immediately after a contact as the Poincare section. A positive
-section speed implies $\theta^+=\gamma-\alpha$; a negative speed implies
-$\theta^+=\gamma+\alpha$. For the rolling branch, conservation of energy and
-the impact reset give
+The Poincare section is the state immediately after impact. On the downhill
+rolling branch,
 
 $$
-P(\omega)=c\sqrt{\omega^2+A},\qquad
-c=\cos(2\alpha),\qquad
-A=4\frac{g}{l}\sin\alpha\sin\gamma.
+P(\omega)=c\sqrt{\omega^2 + A},
+\qquad
+c=\cos(2\alpha),
+\qquad
+A=4{g\over l}\sin\alpha\sin\gamma.
 $$
 
-The full signed map in the plot also includes the direction-reversing standing
-branch and the uphill branch. Its two separatrix thresholds are
-$\omega_2=-1.527617$ rad/s and $\omega_1=0.913491$ rad/s; at either exact value
-the wheel approaches $(0,0)$ asymptotically and never returns to the section.
-
-![One-dimensional return map and identity line](assignment_1_results/return_map.png)
-
-The event-localized RK4 samples intersect the identity line at
-$\omega^*=1.224397107$ rad/s. The closed-form value is 1.224397113 rad/s, a
-difference of $6.27\times10^{-9}$ rad/s.
-
-For the requested two-sided perturbation, I used
-$\delta=0.01\omega^*$ and evaluated the numerical map at
-$\omega^*-\delta$, $\omega^*$, and $\omega^*+\delta$. The one-sided slopes were
-0.498744 and 0.501244, and the centered Floquet estimate was
+The identity-line intersection gives the rolling fixed point:
 
 $$
-\lambda\approx\frac{P(\omega^*+\delta)-P(\omega^*-\delta)}{2\delta}
-=0.499994.
+\omega^* = 1.224397 \text{ rad/s}.
 $$
 
-The analytic derivative is $P'(\omega^*)=\cos^2(2\alpha)=0.500000$. Since
-$|\lambda|<1$, the rolling orbit is locally exponentially stable; a small
-post-impact speed error is approximately halved every step.
+![Return map](assignment_1_results/return_map.png)
 
-## Slope and spoke-count sweeps
+Using a 1% perturbation on both sides of the fixed point gives
 
-For fair RoA comparisons, every sweep used a $101\times161$ cell-centered grid
-with the same normalized coordinates
-$q=(\theta-\gamma)/\alpha\in[-1,1]$ and
-$v=\dot\theta\sqrt{l/g}\in[-1.25,1.25]$.
+| estimate | value |
+|---|---:|
+| left slope | 0.498744 |
+| right slope | 0.501244 |
+| centered Floquet multiplier | 0.499994 |
+| exact multiplier, $\cos^2(2\alpha)$ | 0.500000 |
 
-![Slope and spoke-count effects on RoA and convergence](assignment_1_results/parameter_sweeps.png)
+Because the multiplier is less than 1, the rolling gait is locally stable.
 
-### Slope
+## Slope sweep
 
-With $N=8$, a finite-period rolling fixed point first exists above
+For $N=8$, the rolling basin grows as the slope increases.
 
-$$
-\gamma_{crit}=2\tan^{-1}\!\left[\tan(\alpha/2)\tan^2\alpha\right]
-=0.068229\text{ rad}.
-$$
+![Slope sweep](assignment_1_results/slope_sweep.png)
 
-| $\gamma$ (rad) | rolling RoA | $\omega^*$ (rad/s) | $\lambda$ |
+| $\gamma$ (rad) | rolling basin | fixed speed (rad/s) | multiplier |
 |---:|---:|---:|---:|
-| 0.04 | 0.00% | no rolling cycle | N/A |
-| 0.08 | 48.56% | 1.0955 | 0.5000 |
-| 0.12 | 65.58% | 1.3408 | 0.5000 |
-| 0.16 | 77.22% | 1.5467 | 0.5000 |
-| 0.20 | 84.26% | 1.7272 | 0.5000 |
-| 0.24 | 89.93% | 1.8893 | 0.5000 |
-| 0.28 | 94.34% | 2.0371 | 0.5000 |
-| 0.32 | 97.57% | 2.1734 | 0.5000 |
-| 0.36 | 99.45% | 2.3000 | 0.5000 |
+| 0.04 | 0.00% | no cycle | N/A |
+| 0.08 | 48.46% | 1.0955 | 0.5000 |
+| 0.12 | 65.31% | 1.3408 | 0.5000 |
+| 0.16 | 77.31% | 1.5467 | 0.5000 |
+| 0.20 | 84.34% | 1.7272 | 0.5000 |
+| 0.24 | 90.01% | 1.8893 | 0.5000 |
+| 0.28 | 94.26% | 2.0371 | 0.5000 |
+| 0.32 | 97.48% | 2.1734 | 0.5000 |
+| 0.36 | 99.42% | 2.3000 | 0.5000 |
 
-A steeper slope adds more gravitational energy per step and reduces the speed
-needed to vault the hub over the stance spoke, so the rolling basin grows. The
-largest tested RoA is therefore at $\gamma=0.36$ rad. In this ideal model the
-slope changes the gait speed and basin but not local convergence: algebraically
-$P'(\omega^*)=\cos^2(2\alpha)$, so every viable $N=8$ gait has
-$\lambda=0.5$. Thus all viable tested slopes tie for fastest local convergence
-per step.
+The slope changes how much energy gravity adds during a step, so it changes the
+basin and the fixed-point speed. For this ideal model, it does not change the
+local per-step multiplier for a fixed number of spokes.
 
-### Number of spokes
+## Spoke sweep
 
-I held $\gamma=0.20$ rad for $N=6,\ldots,12$. This is above the largest onset
-slope (0.178160 rad for $N=6$) and below the smallest $\alpha$ (0.261799 rad for
-$N=12$), so both attractors exist in every case and the comparison does not
-silently drop nonexistent cycles.
+For $\gamma=0.2$ rad, increasing the number of spokes makes the next contact
+closer in angle, so more sampled states can keep rolling.
 
-| $N$ | rolling RoA | $\omega^*$ (rad/s) | $\lambda$ |
+![Spoke sweep](assignment_1_results/spoke_sweep.png)
+
+| $N$ | rolling basin | fixed speed (rad/s) | multiplier |
 |---:|---:|---:|---:|
-| 6 | 45.01% | 1.1399 | 0.2500 |
-| 7 | 69.56% | 1.4667 | 0.3887 |
-| 8 | 84.26% | 1.7272 | 0.5000 |
-| 9 | 90.58% | 1.9460 | 0.5868 |
-| 10 | 95.31% | 2.1363 | 0.6545 |
-| 11 | 97.23% | 2.3060 | 0.7077 |
-| 12 | 98.69% | 2.4603 | 0.7500 |
+| 6 | 44.95% | 1.1399 | 0.2500 |
+| 7 | 69.25% | 1.4667 | 0.3887 |
+| 8 | 84.34% | 1.7272 | 0.5000 |
+| 9 | 90.52% | 1.9460 | 0.5868 |
+| 10 | 95.26% | 2.1363 | 0.6545 |
+| 11 | 97.29% | 2.3060 | 0.7077 |
+| 12 | 98.65% | 2.4603 | 0.7500 |
 
-More spokes shorten the angular distance to the next contact and lower the
-vaulting barrier, so the bounded rolling basin increases. The tradeoff is
-slower local convergence per step: $\cos^2(2\pi/N)$ rises from 0.25 at six
-spokes to 0.75 at twelve. Six spokes reject a perturbation fastest, while twelve
-spokes give the broadest tested basin. This statement is per step; convergence
-per unit time or distance can differ because step period and step length also
-change.
-
-## Assumptions and references
-
-This analysis uses the assignment's ideal point-mass, massless-spoke, no-slip,
-perfectly plastic-impact model. It omits compliance, finite double-support
-dynamics, spoke mass, and aerodynamic or bearing losses. The bidirectional
-guards and signed-map treatment follow the standard rimless-wheel construction
-in [MIT's *Underactuated Robotics* notes](https://underactuated.csail.mit.edu/simple_legs.html).
-The raw values behind the plots are in
-[`slope_sweep.csv`](assignment_1_results/slope_sweep.csv),
-[`spoke_sweep.csv`](assignment_1_results/spoke_sweep.csv), and
-[`summary.json`](assignment_1_results/summary.json).
+The tradeoff is convergence per step. Six spokes has the smallest multiplier
+and rejects a perturbation fastest per step, while twelve spokes has the
+largest rolling basin in this grid.
