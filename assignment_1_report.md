@@ -2,8 +2,7 @@
 
 ## Reproducing the experiments
 
-Run these commands from the repository root. Each command handles one assignment
-task and writes its own output to `assignment_1_results/`.
+These outputs are written to `assignment_1_results/`.
 
 ```console
 uv run python assignment_1.py sanity
@@ -52,80 +51,33 @@ Sweeps the number of spokes from 6 to 12 at `gamma = 0.2` rad. It saves
 `spoke_sweep.csv` and `spoke_sweep.png`. More spokes increase the rolling basin
 in this bounded grid, but the per-step Floquet multiplier also increases.
 
-## Model
+## Sketch
 
 ![Annotated model](assignment_1_results/model_sketch.png)
 
-The state is
 
-$$
-x = [\theta,\dot\theta],
-$$
-
-where $\theta$ is measured from the upward vertical and downhill rotation is
-positive. During single support the wheel is an inverted pendulum:
-
-$$
-\dot\theta = \omega,\qquad
-\dot\omega = {g\over l}\sin\theta.
-$$
-
-The slope $\gamma$ sets the contact angle, not the gravity term. A downhill
-impact happens when
-
-$$
-\theta = \gamma + \alpha,\qquad \alpha = {\pi\over N}.
-$$
-
-At impact the new stance spoke becomes the coordinate reference, so
-
-$$
-\theta^+ = \theta^- - 2\alpha,\qquad
-\omega^+ = \omega^-\cos(2\alpha).
-$$
 
 ## Sanity checks
 
 I checked three things before doing the stability plots:
 
-1. The angle should reset by $2\alpha$ at each step.
+1. The angle should reset by $2\alpha$ at each step. 
 2. Mechanical energy should be smooth during a swing and should drop only at
-   plastic impacts.
-3. A rolling initial condition should approach a repeatable post-impact speed.
+   plastic impacts. 
+3. A rolling initial condition should approach a repeatable post-impact speed. 
 
-The command
-
-```console
-uv run python assignment_1.py sanity
-```
-
-uses the default parameters and starts at the post-impact angle with
-$\dot\theta = 1.5$ rad/s. The last post-impact speed from the run is
+The angle does seem to reset in plot. The shape of energy in plot is as expected. The last post-impact speed from the run is
 1.229089 rad/s, close to the return-map fixed point of 1.224397 rad/s.
 
 ![Sanity checks](assignment_1_results/sanity_checks.png)
 
 ## Regions of attraction
 
-For the region-of-attraction plot, I sampled the single-stance interval
-
-$$
-\theta\in[\gamma-\alpha,\gamma+\alpha]
-$$
-
-and angular velocities in
-
-$$
-\dot\theta\sqrt{l/g}\in[-1.25,1.25].
-$$
-
 To keep the brute-force grid fast, I used energy to move each initial condition
-to its next contact, then iterated the signed step-to-step map. This avoids
-taking tiny fixed timesteps near every nonsmooth impact.
+to its next contact, then iterated the signed step-to-step map.
 
-There are two stable attractors in the sampled window:
-
-- standing, reached by low-energy rocking steps; and
+Found two stable attractors:
+- standing
 - the downhill rolling limit cycle.
 
 For the default grid, the rolling basin is 57.31% of the sampled states and the
@@ -135,26 +87,11 @@ standing basin is 42.69%.
 
 ## Return map and Floquet multiplier
 
-The Poincare section is the state immediately after impact. On the downhill
-rolling branch,
-
-$$
-P(\omega)=c\sqrt{\omega^2 + A},
-\qquad
-c=\cos(2\alpha),
-\qquad
-A=4{g\over l}\sin\alpha\sin\gamma.
-$$
-
-The identity-line intersection gives the rolling fixed point:
-
-$$
-\omega^* = 1.224397 \text{ rad/s}.
-$$
+rolling fixed point: $\omega^* = 1.224397 \text{ rad/s}.$
 
 ![Return map](assignment_1_results/return_map.png)
 
-Using a 1% perturbation on both sides of the fixed point gives
+1% perturbation gives:
 
 | estimate | value |
 |---|---:|
@@ -162,8 +99,6 @@ Using a 1% perturbation on both sides of the fixed point gives
 | right slope | 0.501244 |
 | centered Floquet multiplier | 0.499994 |
 | exact multiplier, $\cos^2(2\alpha)$ | 0.500000 |
-
-Because the multiplier is less than 1, the rolling gait is locally stable.
 
 ## Slope sweep
 
@@ -184,8 +119,7 @@ For $N=8$, the rolling basin grows as the slope increases.
 | 0.36 | 99.42% | 2.3000 | 0.5000 |
 
 The slope changes how much energy gravity adds during a step, so it changes the
-basin and the fixed-point speed. For this ideal model, it does not change the
-local per-step multiplier for a fixed number of spokes.
+basin and the fixed-point speed. 
 
 ## Spoke sweep
 
@@ -204,6 +138,6 @@ closer in angle, so more sampled states can keep rolling.
 | 11 | 97.29% | 2.3060 | 0.7077 |
 | 12 | 98.65% | 2.4603 | 0.7500 |
 
-The tradeoff is convergence per step. Six spokes has the smallest multiplier
+Six spokes has the smallest multiplier
 and rejects a perturbation fastest per step, while twelve spokes has the
 largest rolling basin in this grid.
