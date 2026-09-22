@@ -42,11 +42,11 @@ def event_guard(previous_state, next_state, params):
 
 
 def event_dynamics(state, params):
+    incline = params["incline"]
     angle_of_attack = params["angle_of_attack"]
-    angle = state[0]
     angular_velocity = state[1]
 
-    angle_after = angle-2*angle_of_attack
+    angle_after = incline - angle_of_attack
     angular_velocity_after = angular_velocity * np.cos(2*angle_of_attack)
 
     return np.array([angle_after, angular_velocity_after])
