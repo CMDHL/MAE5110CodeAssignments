@@ -118,10 +118,9 @@ def evaluate_grid_resolution(params):
     rows = []
 
     for speed_count, control_count in [
-        (151, 31),
-        (201, 31),
-        (251, 31),
-        (251, 41),
+        (222, 39),
+        (223, 38),
+        (223, 39),
     ]:
         speed_values, angle_of_attack_values, next_speed_grid = (
             build_poincare_table(
@@ -252,8 +251,8 @@ def main():
     speed_values, angle_of_attack_values, next_speed_grid = (
         build_poincare_table(
             params,
-            speed_count=251,
-            control_count=41,
+            speed_count=223,
+            control_count=39,
         )
     )
     roa_upper_speed = load_roa_upper_speed(params)

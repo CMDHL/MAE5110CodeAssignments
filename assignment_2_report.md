@@ -21,12 +21,11 @@ The state grid covers theta_dot in [0, sqrt(2 g / l)]. The control grid covers a
 
 | speed count | control count | speed spacing | alpha spacing | max rounding error | passes |
 | --- | --- | --- | --- | --- | --- |
-| 151 | 31 | 0.029530 | 0.001870 | 0.014748 | False |
-| 201 | 31 | 0.022147 | 0.001870 | 0.011065 | False |
-| 251 | 31 | 0.017718 | 0.001870 | 0.008857 | False |
-| 251 | 41 | 0.017718 | 0.001402 | 0.008858 | True |
+| 222 | 39 | 0.020043 | 0.001476 | 0.010021 | False |
+| 223 | 38 | 0.019952 | 0.001516 | 0.009976 | False |
+| 223 | 39 | 0.019952 | 0.001476 | 0.009976 | True |
 
-151x31 failed both, 201x31 failed both, 251x31 passed max rounding error check but failed alpha spacing check; 251x41 passed both and is thus chosen.
+222x39 failed the max rounding error check, and 223x38 failed the alpha spacing check; 223x39 passed both and is thus chosen.
 
 ![Steps to standstill](assignment_2_results/steps_to_standstill.png)
 
