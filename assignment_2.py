@@ -9,7 +9,7 @@ from models import inverted_pendulum_walker as model
 # Fixed controls for this visualization example.
 params = {
     "gravity": 9.81,  # m/s^2
-    "length": 1.0,  # m
+    "length": 2.0,  # m
     "mass": 1.0,  # kg
     "incline": 0.06,  # rad
     "angle_of_attack": np.pi / 8,  # rad
