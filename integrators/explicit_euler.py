@@ -1,2 +1,2 @@
-def step(t, state, timestep, params, model):
-    return state + timestep * model.dynamics(t, state, params)
+def step(dynamics, t, state, timestep, params):
+    return state + timestep * dynamics(t, state, params)

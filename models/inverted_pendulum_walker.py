@@ -18,6 +18,8 @@ def generate_params():
         "ankle_torque": 0.0,            # N m
     }
 
+def generate_initial_condition():
+    return np.array([0.0, 0.0])
 
 def dynamics(t, state, params):
     gravity = params["gravity"]

@@ -30,6 +30,8 @@ def generate_params(N=8, gamma=0.1):
     params["alpha"] = np.pi / params["N"]
     return params
 
+def generate_initial_condition():
+    return np.array([0.0, 0.0])
 
 def calculate_energy(state, params):
     gravity = params["gravity"]
